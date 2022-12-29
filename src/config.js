@@ -1,1 +1,1 @@
-export const apiUrl = 'https://ati-app.onrender.com';
+export const apiUrl = 'https://ati-api.onrender.com';
