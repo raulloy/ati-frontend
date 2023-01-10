@@ -96,3 +96,19 @@ export const getPerfiles = async () => {
     return { error: error.message };
   }
 };
+
+export const getHuecos = async (id) => {
+  try {
+    const response = await axios({
+      url: `${apiUrl}/api/detail-huecos/${id}`,
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};

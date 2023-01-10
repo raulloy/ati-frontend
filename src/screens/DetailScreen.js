@@ -1,8 +1,10 @@
 import {
   detailPaginatedResults,
+  getHuecos,
   getPerfiles,
   getPerfilesProduct,
   getProduct,
+  getQuotation,
 } from '../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -12,7 +14,7 @@ const Parser = require('expr-eval').Parser;
 const DetailScreen = {
   after_render: async () => {
     const request = parseRequestUrl();
-    console.log(request.page);
+    // console.log(request.page);
     const data = await detailPaginatedResults(request.page);
     const perfiles = await getPerfiles();
 
@@ -20,10 +22,10 @@ const DetailScreen = {
     const next = data.next;
     const dataLength = data.length;
 
-    console.log(previous);
-    console.log(next);
-    console.log('limit:', data.limit);
-    console.log('pages:', Math.ceil(dataLength / data.limit));
+    // console.log(previous);
+    // console.log(next);
+    // console.log('limit:', data.limit);
+    // console.log('pages:', Math.ceil(dataLength / data.limit));
 
     const paginationButtons = new PaginationButton(
       Math.ceil(dataLength / data.limit),
@@ -55,6 +57,14 @@ const DetailScreen = {
         const perfilesCalc = perfilesData.map((perfil) =>
           Parser.parse(perfil.Formula).evaluate({ H: alto, L: ancho })
         );
+        const huecosData = await getHuecos(idsArray[4]);
+        const HuecosCalcH = huecosData.map((hueco) =>
+          Parser.parse(hueco.Formula_Alto).evaluate({ H: alto })
+        );
+        const HuecosCalcL = huecosData.map((hueco) =>
+          Parser.parse(hueco.Formula_Ancho).evaluate({ L: ancho })
+        );
+
         const doc = new jsPDF();
 
         const perfilesFilter = perfilesData.map((element) =>
@@ -62,14 +72,10 @@ const DetailScreen = {
             (perfil) => perfil.Codigo == Object.values(element)[1]
           )
         );
-        console.log(perfilesFilter[0]);
-
-        const img = new Image();
-        img.src = '../images/box-product.png';
-        console.log(img);
+        // console.log(perfilesFilter[0]);
 
         const perfilesTransform = perfilesData.map((element, index) => [
-          [doc.addImage(img.src, 'png', 0, 0, 10, 10)],
+          ['Img'],
           Object.values(element)[1],
           [perfilesFilter[index][0].Descripcion],
           Object.values(element)[2],
@@ -77,7 +83,18 @@ const DetailScreen = {
           ['||'],
           Object.values(element)[3],
         ]);
-        console.log(perfilesTransform);
+        // console.log(perfilesTransform);
+
+        const HuecosTransform = huecosData.map((element, index) => [
+          Object.values(element)[1],
+          Object.values(element)[2],
+          HuecosCalcH[index],
+          HuecosCalcL[index],
+          Object.values(element)[3],
+          Object.values(element)[4],
+        ]);
+        console.log(huecosData);
+        // console.log(HuecosTransform);
 
         const rowHeaders = detailProduct.map((product) => [
           Object.keys(product)[2],
@@ -127,16 +144,65 @@ const DetailScreen = {
         autoTable(doc, {
           head: [
             [
+              {
+                content: 'Perfiles',
+                styles: {
+                  halign: 'left',
+                  fontSize: 18,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
+          head: [
+            [
               'Imagen',
               'Referencia',
               'Descripcion',
               'Cantidad',
               'Medida',
-              'Tipo Corte',
+              'Tipo de Corte',
               'Formula',
             ],
           ],
           body: perfilesTransform,
+        });
+        autoTable(doc, {
+          head: [
+            [
+              {
+                content: 'Huecos',
+                styles: {
+                  halign: 'left',
+                  fontSize: 18,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
+          head: [
+            [
+              'Hueco',
+              'Cantidad',
+              'Medida Alto',
+              'Medida Ancho',
+              'Formula Alto',
+              'Formula Ancho',
+            ],
+          ],
+          body: HuecosTransform,
         });
 
         doc.save(button.id);
@@ -153,10 +219,23 @@ const DetailScreen = {
 
     const productsDetail = data.results;
 
+    const quotationNumbers = await Promise.all(
+      productsDetail.map(async (product) => {
+        const quotationID = product.ID_Cotizacion;
+        const quotationData = await getQuotation(quotationID);
+        const quotationNumber = quotationData.No_Cotizacion;
+        return [quotationID, quotationNumber];
+      })
+    );
+
+    const returnQuotationNumber = (id) => {
+      const qNumber = quotationNumbers.filter((element) => element[0] == id);
+      return qNumber[0][1];
+    };
+
     return `
     <h1>Detalle</h1>
     
-
     <table>
       <tr>
         <th>ID</th>
@@ -176,7 +255,7 @@ const DetailScreen = {
           (product) => `
           <tr>
             <td><a href="/#/detail/${product.ID}">${product.ID}</a></td>
-            <td>${product.ID_Cotizacion}</td>
+            <td>${returnQuotationNumber(product.ID_Cotizacion)}</td>
             <td>${product.Ubicacion}</td>
             <td>${product.Tipo}</td>
             <td>${product.Codigo}</td>
@@ -185,15 +264,16 @@ const DetailScreen = {
             <td>${product.Ancho}</td>
             <td>${product.Referencia}</td>
             <td>${product.Importe}</td>
-            <td><button id="${product.ID}" class="card">Hoja de corte</button></td>
+            <td><button id="${
+              product.ID
+            }" class="card">Hoja de corte</button></td>
           </tr>
         `
         )
         .join('')}
     </table>
       
-    <div class="pagination-buttons" id="pagination-buttons">
-    </div>
+    <div class="pagination-buttons" id="pagination-buttons"></div>
 
     `;
   },
