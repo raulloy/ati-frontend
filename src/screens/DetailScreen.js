@@ -1,10 +1,12 @@
 import {
   detailPaginatedResults,
+  getHerrajesProduct,
   getHuecos,
   getPerfiles,
   getPerfilesProduct,
   getProduct,
   getQuotation,
+  getSelladoresProduct,
 } from '../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -57,6 +59,7 @@ const DetailScreen = {
         const perfilesCalc = perfilesData.map((perfil) =>
           Parser.parse(perfil.Formula).evaluate({ H: alto, L: ancho })
         );
+
         const huecosData = await getHuecos(idsArray[4]);
         const HuecosCalcH = huecosData.map((hueco) =>
           Parser.parse(hueco.Formula_Alto).evaluate({ H: alto })
@@ -64,6 +67,14 @@ const DetailScreen = {
         const HuecosCalcL = huecosData.map((hueco) =>
           Parser.parse(hueco.Formula_Ancho).evaluate({ L: ancho })
         );
+
+        const selladoresData = await getSelladoresProduct(idsArray[4]);
+        const selladoresCalc = selladoresData.map((sellador) =>
+          Parser.parse(sellador.Formula).evaluate({ H: alto, L: ancho })
+        );
+        // console.table(selladoresCalc);
+
+        const herrajesData = await getHerrajesProduct(idsArray[4]);
 
         const doc = new jsPDF();
 
@@ -93,8 +104,23 @@ const DetailScreen = {
           Object.values(element)[3],
           Object.values(element)[4],
         ]);
-        console.log(huecosData);
+        // console.log(huecosData);
         // console.log(HuecosTransform);
+
+        const SelladoresTransform = selladoresData.map((element, index) => [
+          Object.values(element)[1],
+          selladoresCalc[index].toFixed(2),
+          Object.values(element)[2],
+          Object.values(element)[3],
+        ]);
+        // console.log(SelladoresTransform);
+
+        const HerrajesTransform = herrajesData.map((element, index) => [
+          Object.values(element)[1],
+          Object.values(element)[2],
+          Object.values(element)[3],
+        ]);
+        // console.log(SelladoresTransform);
 
         const rowHeaders = detailProduct.map((product) => [
           Object.keys(product)[2],
@@ -138,6 +164,24 @@ const DetailScreen = {
           },
         });
         autoTable(doc, {
+          head: [
+            [
+              {
+                content: 'Información del Producto',
+                styles: {
+                  halign: 'left',
+                  fontSize: 14,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
           head: rowHeaders,
           body: detailRows,
         });
@@ -148,7 +192,7 @@ const DetailScreen = {
                 content: 'Perfiles',
                 styles: {
                   halign: 'left',
-                  fontSize: 18,
+                  fontSize: 14,
                   textColor: '#ffffff',
                 },
               },
@@ -180,7 +224,7 @@ const DetailScreen = {
                 content: 'Huecos',
                 styles: {
                   halign: 'left',
-                  fontSize: 18,
+                  fontSize: 14,
                   textColor: '#ffffff',
                 },
               },
@@ -203,6 +247,68 @@ const DetailScreen = {
             ],
           ],
           body: HuecosTransform,
+        });
+        autoTable(doc, {
+          head: [
+            [
+              {
+                content: 'Accesorios para Producción',
+                styles: {
+                  halign: 'left',
+                  fontSize: 18,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
+          head: [
+            [
+              {
+                content: 'Selladores',
+                styles: {
+                  halign: 'left',
+                  fontSize: 14,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
+          head: [['Sellador', 'Medida', 'Formula', 'Área']],
+          body: SelladoresTransform,
+        });
+        autoTable(doc, {
+          head: [
+            [
+              {
+                content: 'Herrajes',
+                styles: {
+                  halign: 'left',
+                  fontSize: 14,
+                  textColor: '#ffffff',
+                },
+              },
+            ],
+          ],
+          theme: 'plain',
+          styles: {
+            fillColor: '#308ec4',
+          },
+        });
+        autoTable(doc, {
+          head: [['Herraje', 'Cantidad', 'Área']],
+          body: HerrajesTransform,
         });
 
         doc.save(button.id);

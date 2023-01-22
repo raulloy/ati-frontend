@@ -33,22 +33,6 @@ export const getQuotation = async (id) => {
   }
 };
 
-export const getPerfilesProduct = async (id) => {
-  try {
-    const response = await axios({
-      url: `${apiUrl}/api/detail-perfiles/${id}`,
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    return { error: error.message };
-  }
-};
-
 export const productsPaginatedResults = async (page) => {
   try {
     const response = await axios({
@@ -97,10 +81,74 @@ export const getPerfiles = async () => {
   }
 };
 
+export const getPerfilesProduct = async (id) => {
+  try {
+    const response = await axios({
+      url: `${apiUrl}/api/detail-perfiles/${id}`,
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
 export const getHuecos = async (id) => {
   try {
     const response = await axios({
       url: `${apiUrl}/api/detail-huecos/${id}`,
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+export const getAccesorios = async () => {
+  try {
+    const response = await axios({
+      url: `${apiUrl}/api/accesorios`,
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+export const getSelladoresProduct = async (id) => {
+  try {
+    const response = await axios({
+      url: `${apiUrl}/api/detail-accesorios/selladores/${id}`,
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
+export const getHerrajesProduct = async (id) => {
+  try {
+    const response = await axios({
+      url: `${apiUrl}/api/detail-accesorios/herrajes/${id}`,
       method: 'GET',
       mode: 'cors',
       headers: {
